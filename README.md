@@ -8,7 +8,7 @@ Example: ENVIRONMENT=testnet.
 - In the same .env file, define your personal API key and secret key that binance provides for you.
 Example: API_KEY="************"
          SECRET_KEY="**********"
-- Define the pairs of currency you want to buy (probably BTC/USDT) and the amount of money you're going to use in each order
+- Define the pair of currency you want to buy (probably BTC/USDT) and the amount of money you're going to use in each order.
 Example: SYMBOL="BTCUSDT"
          QUOTE_QUANTITY="10.00"
 
