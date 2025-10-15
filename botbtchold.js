@@ -1,0 +1,123 @@
+require('dotenv').config();
+
+// assinar chamada da api da binance
+const crypto = require("crypto");
+
+// requisições http
+const axios = require("axios");
+
+// save state
+const fs = require('fs');
+
+const ENVIRONMENT = process.env.ENVIRONMENT || 'testnet';
+const SYMBOL = process.env.SYMBOL;
+const QUOTE_QUANTITY = process.env.QUOTE_QUANTITY;
+const API_KEY = process.env.API_KEY;
+const SECRET_KEY = process.env.SECRET_KEY;
+
+const API_URLS = { testnet: "https://testnet.binance.vision", production: "https://api.binance.com" };
+const API_URL = API_URLS[ENVIRONMENT];
+const STATE_FILE = 'state.json';
+
+// Identificar erros
+
+if (!API_KEY || !SECRET_KEY || !SYMBOL || !QUOTE_QUANTITY) {
+    console.error("ERRO: Uma ou mais variáveis de ambiente estão faltando.");
+    console.error("Verifique se o seu arquivo .env está completo com API_KEY, SECRET_KEY, SYMBOL e QUOTE_QUANTITY.");
+    process.exit(1);
+}
+
+console.log(`--- Iniciando o Bot em modo: ${ENVIRONMENT.toUpperCase()} ---`);
+console.log(`--- Operando o par: ${SYMBOL} com valor de ${QUOTE_QUANTITY} ---`);
+
+
+// Funções para carregar e salvar as posições das médias
+function loadState() {
+    if (fs.existsSync(STATE_FILE)) {
+        console.log("Arquivo de estado encontrado! Carregando...");
+        const stateJSON = fs.readFileSync(STATE_FILE);
+        return JSON.parse(stateJSON);
+    }
+    console.log("Nenhum arquivo de estado encontrado. Criando um novo...");
+    return { prev_sma7: 0, prev_sma21: 0 };
+}
+
+function saveState(state) {
+    const stateJSON = JSON.stringify(state, null, 2);
+    fs.writeFileSync(STATE_FILE, stateJSON);
+}
+
+// Média Móvel
+
+function calcSMA(data) {
+    const closes = data.map(candle => parseFloat(candle[4]));
+    const sum = closes.reduce((a, b) => a + b);
+    return sum / data.length;
+}
+
+
+// Parâmetros para execução da ordem
+
+async function start() {
+    try {
+        const state = loadState();
+
+        const { data } = await axios.get(`${API_URL}/api/v3/klines?symbol=${SYMBOL}&interval=15m&limit=21`);
+        const price = parseFloat(data[data.length - 1][4]);
+
+        const sma21 = calcSMA(data);
+        const sma7 = calcSMA(data.slice(14));
+
+        console.clear();
+        console.log(`Preço atual (${SYMBOL}): ${price.toFixed(2)}`);
+        console.log(`SMA (7) Anterior: ${state.prev_sma7.toFixed(2)} | Atual: ${sma7.toFixed(2)}`);
+        console.log(`SMA (21) Anterior: ${state.prev_sma21.toFixed(2)} | Atual: ${sma21.toFixed(2)}`);
+
+        const cruzouParaCima = state.prev_sma7 <= state.prev_sma21 && sma7 > sma21;
+
+        if (cruzouParaCima) {
+            console.log("CRUZAMENTO DE MÉDIAS DETECTADO! Criando ordem de COMPRA...");
+            await newOrder(SYMBOL, QUOTE_QUANTITY, "buy");
+        } else {
+            console.log("Aguardando um novo sinal de cruzamento de compra...");
+        }
+
+        saveState({ prev_sma7: sma7, prev_sma21: sma21 });
+
+    } catch (err) {
+        console.error("Ocorreu um erro no loop principal:", err.message);
+    }
+}
+
+// Função para criar ordem 
+
+async function newOrder(symbol, quoteQuantity, side) {
+    const order = { 
+        symbol, 
+        side, 
+        type: "MARKET", 
+        quoteOrderQty: quoteQuantity,
+        timestamp: Date.now() 
+    };
+
+    const signature = crypto
+        .createHmac("sha256", SECRET_KEY)
+        .update(new URLSearchParams(order).toString())
+        .digest("hex");
+
+    order.signature = signature;
+
+    try {
+        const { data } = await axios.post(
+            `${API_URL}/api/v3/order`,
+            new URLSearchParams(order).toString(),
+            { headers: { "X-MBX-APIKEY": API_KEY } }
+        );
+        console.log("Ordem criada com sucesso:", data);
+    } catch (err) {
+        console.error("Erro ao criar a ordem:", err.response ? err.response.data : err.message);
+    }
+}
+
+setInterval(start, 3000);
+start();
