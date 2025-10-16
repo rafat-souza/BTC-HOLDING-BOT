@@ -3,7 +3,7 @@ This bot buys bitcoin through binance.
 
 How to use
 
-- In a .env file, define the ENVIRONMENT type, it can be "testnet" or "production", the real binance api (I recommend the testnet if it's your fist time trying the bot).
+- In a .env file, define the ENVIRONMENT type, it can be "testnet" or "production" (the production is where you'll use real money. I recommend the testnet if it's your fist time trying the bot).
 Example: ENVIRONMENT=testnet.
 - In the same .env file, define your personal API key and secret key that binance provides for you.
 Example: API_KEY="************"
@@ -17,4 +17,5 @@ Example: SYMBOL="BTCUSDT"
 - In the terminal, inside your folder, run "node botbtchold" (or the name of the .js archive if you changed it). Press ctrl + c to stop it.
 - You can also use pm2 to run it so you can close your tabs. 
 
+*IMPORTANT*: The testnet from binance can show unreal prices, don't worry, if the code is running, everything is ok. Try it in the real binance api "production" with a small money amount
 This isn't an investment recommendation.
