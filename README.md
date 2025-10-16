@@ -22,6 +22,10 @@ Example: SYMBOL="BTCUSDT"
 *IMPORTANT*: The testnet from binance can show unreal prices, don't worry, if the code is running, everything is ok. Try it in the real binance api "production" with a small money amount
 This isn't an investment recommendation.
 
+
+
+
+
 🇧🇷 Descrição em português
 
 Este bot compra bitcoins através da Binance.
