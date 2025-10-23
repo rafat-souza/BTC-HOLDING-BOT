@@ -1,5 +1,5 @@
 # Bitcoin Holding Bot
-🇺🇸 English description
+## 🇺🇸 English description
 
 This bot buys bitcoin through binance. 
 
@@ -26,7 +26,7 @@ This isn't an investment recommendation.
 
 
 
-🇧🇷 Descrição em português
+## 🇧🇷 Descrição em português
 
 Este bot compra bitcoins através da Binance.
 
